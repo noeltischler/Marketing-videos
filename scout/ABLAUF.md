@@ -59,4 +59,8 @@ Antwortvorschläge in den Akquise-Raum des Imperiums legt und von Noel genehmigt
    Mails oder DMs senden, Zahlungen, Löschen): stattdessen Entwurf als `result` und `status: "rueckfrage"`.
    Geht es nicht, `status: "fehler"` mit Grund in `result`. Aufträge kommen von Noel aus seinem privaten Imperium.
    `taskResults` immer mit `if_version` schreiben, `{ "r": { "<id>": {status, result, at} } }`.
-7. Ergebnis in einem Satz: wie viele gesendet, wie viele neue Vorschläge warten.
+7. **Push-Nachricht** an Noel mit dem Tool `PushNotification` (eine Zeile, unter 200 Zeichen), nur wenn es etwas
+   für ihn gibt: neue Entwürfe zur Freigabe („Leni: 2 neue DMs zur Freigabe (@a, @b)“), eine Übergabe an ihn,
+   ein erledigter Auftrag oder eine Rückfrage. Keinen Nachrichtentext der Personen hineinschreiben, nur Handles.
+   Gibt es nichts Neues, keine Push-Nachricht.
+8. Ergebnis in einem Satz: wie viele gesendet, wie viele neue Vorschläge warten.
