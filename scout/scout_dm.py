@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Scout: Instagram-DMs abholen und freigegebene Antworten senden.
+"""Leni (früher Scout): Instagram-DMs abholen und freigegebene Antworten senden.
 
 Nutzt die Instagram API mit Instagram-Login (graph.instagram.com).
 Der Zugangsschlüssel kommt als Netzwerk-Secret (vom Proxy eingesetzt) oder
