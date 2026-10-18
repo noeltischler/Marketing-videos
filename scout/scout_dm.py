@@ -6,7 +6,7 @@ Der Zugangsschlüssel kommt als Netzwerk-Secret (vom Proxy eingesetzt) oder
 aus der Umgebungsvariable IG_ACCESS_TOKEN und wird nie ausgegeben oder gespeichert.
 
   python3 scout_dm.py check                       # Konto prüfen
-  python3 scout_dm.py fetch [--limit 20]          # Gespräche als JSON
+  python3 scout_dm.py fetch [--limit 50]          # Gespräche als JSON
   python3 scout_dm.py send --to IGSID --text-file antwort.txt
 """
 import argparse
@@ -109,7 +109,7 @@ def main():
     sub = ap.add_subparsers(dest="cmd", required=True)
     sub.add_parser("check")
     f = sub.add_parser("fetch")
-    f.add_argument("--limit", type=int, default=20)
+    f.add_argument("--limit", type=int, default=50)
     s = sub.add_parser("send")
     s.add_argument("--to", required=True)
     s.add_argument("--text-file", required=True)
