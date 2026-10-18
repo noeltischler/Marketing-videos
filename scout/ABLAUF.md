@@ -8,7 +8,7 @@ Antwortvorschläge in den Akquise-Raum des Imperiums legt und von Noel genehmigt
   - Dokument `dms`: von Scout geschrieben, die Seite liest nur.
   - Dokument `dmDecisions`: von der Seite geschrieben (Genehmigen/Ablehnen), Scout liest nur.
 - Gesprächsleitfaden: `scout/leitfaden.md` (Ton, Regeln, Ablauf bis zum Termin).
-- Instagram-Zugang: Umgebungsvariable `IG_ACCESS_TOKEN`, Host `graph.instagram.com`.
+- Instagram-Zugang: Netzwerk-Secret `IG_ACCESS_TOKEN` für Host `graph.instagram.com` (Proxy setzt den Header).
 
 ## Datenformat
 

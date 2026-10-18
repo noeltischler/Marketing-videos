@@ -77,7 +77,7 @@ def fetch(limit):
             msgs.append({
                 "id": m["id"],
                 "from_me": str(m.get("from", {}).get("id")) == my_id,
-                "text": m.get("message", ""),
+                "text": m.get("message") or "[Anhang, Sticker oder Beitrag]",
                 "at": parse_time(m["created_time"]).isoformat(),
             })
         last_in = next((m for m in reversed(msgs) if not m["from_me"]), None)
