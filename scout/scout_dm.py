@@ -2,8 +2,8 @@
 """Scout: Instagram-DMs abholen und freigegebene Antworten senden.
 
 Nutzt die Instagram API mit Instagram-Login (graph.instagram.com).
-Der Zugangsschlüssel kommt aus der Umgebungsvariable IG_ACCESS_TOKEN
-und wird nie ausgegeben oder gespeichert.
+Der Zugangsschlüssel kommt als Netzwerk-Secret (vom Proxy eingesetzt) oder
+aus der Umgebungsvariable IG_ACCESS_TOKEN und wird nie ausgegeben oder gespeichert.
 
   python3 scout_dm.py check                       # Konto prüfen
   python3 scout_dm.py fetch [--limit 20]          # Gespräche als JSON
@@ -23,10 +23,8 @@ WINDOW_HOURS = 24  # Automatische Antworten nur bis 24 h nach der letzten Nachri
 
 
 def token():
-    t = os.environ.get("IG_ACCESS_TOKEN", "").strip()
-    if not t:
-        sys.exit("IG_ACCESS_TOKEN fehlt in der Umgebung.")
-    return t
+    # Leer, wenn der Schlüssel als Netzwerk-Secret hinterlegt ist: dann setzt der Proxy den Header
+    return os.environ.get("IG_ACCESS_TOKEN", "").strip()
 
 
 def call(method, path, params=None, body=None):
@@ -35,7 +33,9 @@ def call(method, path, params=None, body=None):
         url += "?" + urllib.parse.urlencode(params)
     data = json.dumps(body).encode() if body is not None else None
     req = urllib.request.Request(url, data=data, method=method)
-    req.add_header("Authorization", "Bearer " + token())
+    t = token()
+    if t:
+        req.add_header("Authorization", "Bearer " + t)
     if data is not None:
         req.add_header("Content-Type", "application/json")
     try:
