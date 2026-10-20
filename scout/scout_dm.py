@@ -24,6 +24,8 @@ PLATFORMS = {
     "messenger": {"api": "https://graph.facebook.com/v25.0", "env": "FB_PAGE_TOKEN", "name": "Facebook"},
 }
 PLATFORM = "instagram"
+# Facebook-Seite „Noel Tischler“; der Seiten-Token darf /me ohne pages_read_engagement nicht lesen
+FB_PAGE_ID = os.environ.get("FB_PAGE_ID", "1294916550379991")
 WINDOW_HOURS = 24  # Automatische Antworten nur bis 24 h nach der letzten Nachricht der Person
 
 
@@ -64,14 +66,15 @@ def parse_time(s):
 
 def me():
     if PLATFORM == "messenger":
-        return call("GET", "/me", {"fields": "id,name"})  # die Facebook-Seite
+        return {"id": FB_PAGE_ID, "name": "Noel Tischler (Facebook-Seite)"}
     return call("GET", "/me", {"fields": "user_id,username"})
 
 
 def fetch(limit):
     account = me()
     my_id = str(account.get("user_id") or account.get("id"))
-    res = call("GET", "/me/conversations", {
+    base = "/" + FB_PAGE_ID if PLATFORM == "messenger" else "/me"
+    res = call("GET", base + "/conversations", {
         "platform": PLATFORM,
         "limit": limit,
         "fields": "id,updated_time,participants,messages.limit(15){id,created_time,from,to,message}",
@@ -114,7 +117,8 @@ def send(to, text):
     body = {"recipient": {"id": to}, "message": {"text": text}}
     if PLATFORM == "messenger":
         body["messaging_type"] = "RESPONSE"  # Antwort im 24-h-Fenster
-    res = call("POST", "/me/messages", body=body)
+    base = "/" + FB_PAGE_ID if PLATFORM == "messenger" else "/me"
+    res = call("POST", base + "/messages", body=body)
     print(json.dumps({"sent": True, "message_id": res.get("message_id")}))
 
 
