@@ -34,12 +34,15 @@ def token():
 
 def call(method, path, params=None, body=None):
     url = PLATFORMS[PLATFORM]["api"] + path
+    t = token()
+    if t and PLATFORM == "messenger":
+        # Facebook nimmt den Seiten-Token zuverlässig als Parameter an
+        params = dict(params or {}, access_token=t)
     if params:
         url += "?" + urllib.parse.urlencode(params)
     data = json.dumps(body).encode() if body is not None else None
     req = urllib.request.Request(url, data=data, method=method)
-    t = token()
-    if t:
+    if t and PLATFORM != "messenger":
         req.add_header("Authorization", "Bearer " + t)
     if data is not None:
         req.add_header("Content-Type", "application/json")

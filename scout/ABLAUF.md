@@ -14,7 +14,7 @@ Antwortvorschläge in den Akquise-Raum des Imperiums legt und von Noel genehmigt
   was passiert ist; was zu tun ist, steht immer in der Datenbank.
 - Gesprächsleitfaden: `scout/leitfaden.md` (Ton, Regeln, Ablauf bis zum Termin).
 - Instagram-Zugang: Netzwerk-Secret `IG_ACCESS_TOKEN` für Host `graph.instagram.com` (Proxy setzt den Header).
-- Messenger-Zugang (Facebook-Seite „Noel Tischler“, ID 1294916550379991): Netzwerk-Secret `FB_PAGE_TOKEN` für Host
+- Messenger-Zugang (Facebook-Seite „Noel Tischler“, ID 1294916550379991): Umgebungsvariable `FB_PAGE_TOKEN` (wird als Parameter access_token gesendet, nie ausgeben) oder Netzwerk-Secret für Host
   `graph.facebook.com`. Alle Befehle von `scout_dm.py` mit `--platform messenger` davor laufen über die Seite.
   Neue Secrets sehen nur neue Sitzungen. Bis zur App-Review erreicht Leni im Messenger nur Personen mit einer Rolle in der App Scout.
 
