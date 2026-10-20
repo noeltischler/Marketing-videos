@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
-"""Leni (früher Scout): Instagram-DMs abholen und freigegebene Antworten senden.
+"""Leni (früher Scout): Instagram- und Messenger-DMs abholen und freigegebene Antworten senden.
 
-Nutzt die Instagram API mit Instagram-Login (graph.instagram.com).
-Der Zugangsschlüssel kommt als Netzwerk-Secret (vom Proxy eingesetzt) oder
-aus der Umgebungsvariable IG_ACCESS_TOKEN und wird nie ausgegeben oder gespeichert.
+Instagram: Instagram API mit Instagram-Login (graph.instagram.com), Schlüssel IG_ACCESS_TOKEN.
+Messenger: Messenger-Plattform der Facebook-Seite (graph.facebook.com), Seiten-Token FB_PAGE_TOKEN.
+Die Schlüssel kommen als Netzwerk-Secret (vom Proxy eingesetzt) oder aus der gleichnamigen
+Umgebungsvariable und werden nie ausgegeben oder gespeichert.
 
-  python3 scout_dm.py check                       # Konto prüfen
-  python3 scout_dm.py fetch [--limit 50]          # Gespräche als JSON
-  python3 scout_dm.py send --to IGSID --text-file antwort.txt
+  python3 scout_dm.py [--platform messenger] check                 # Konto prüfen
+  python3 scout_dm.py [--platform messenger] fetch [--limit 50]    # Gespräche als JSON
+  python3 scout_dm.py [--platform messenger] send --to ID --text-file antwort.txt
 """
 import argparse
 import datetime as dt
@@ -18,17 +19,21 @@ import urllib.error
 import urllib.parse
 import urllib.request
 
-API = "https://graph.instagram.com/v25.0"
+PLATFORMS = {
+    "instagram": {"api": "https://graph.instagram.com/v25.0", "env": "IG_ACCESS_TOKEN", "name": "Instagram"},
+    "messenger": {"api": "https://graph.facebook.com/v25.0", "env": "FB_PAGE_TOKEN", "name": "Facebook"},
+}
+PLATFORM = "instagram"
 WINDOW_HOURS = 24  # Automatische Antworten nur bis 24 h nach der letzten Nachricht der Person
 
 
 def token():
     # Leer, wenn der Schlüssel als Netzwerk-Secret hinterlegt ist: dann setzt der Proxy den Header
-    return os.environ.get("IG_ACCESS_TOKEN", "").strip()
+    return os.environ.get(PLATFORMS[PLATFORM]["env"], "").strip()
 
 
 def call(method, path, params=None, body=None):
-    url = API + path
+    url = PLATFORMS[PLATFORM]["api"] + path
     if params:
         url += "?" + urllib.parse.urlencode(params)
     data = json.dumps(body).encode() if body is not None else None
@@ -46,15 +51,17 @@ def call(method, path, params=None, body=None):
             err = json.load(e).get("error", {})
         except Exception:
             err = {}
-        sys.exit(f"Instagram-Fehler {e.code}: {err.get('message', e.reason)}")
+        sys.exit(f"{PLATFORMS[PLATFORM]['name']}-Fehler {e.code}: {err.get('message', e.reason)}")
 
 
 def parse_time(s):
-    # Instagram liefert z. B. 2026-10-18T16:54:54+0000
+    # Instagram und Facebook liefern z. B. 2026-10-18T16:54:54+0000
     return dt.datetime.strptime(s, "%Y-%m-%dT%H:%M:%S%z")
 
 
 def me():
+    if PLATFORM == "messenger":
+        return call("GET", "/me", {"fields": "id,name"})  # die Facebook-Seite
     return call("GET", "/me", {"fields": "user_id,username"})
 
 
@@ -62,7 +69,7 @@ def fetch(limit):
     account = me()
     my_id = str(account.get("user_id") or account.get("id"))
     res = call("GET", "/me/conversations", {
-        "platform": "instagram",
+        "platform": PLATFORM,
         "limit": limit,
         "fields": "id,updated_time,participants,messages.limit(15){id,created_time,from,to,message}",
     })
@@ -84,14 +91,15 @@ def fetch(limit):
         out.append({
             "convId": c["id"],
             "userId": str(other.get("id")),
-            "handle": other.get("username", ""),
+            "platform": PLATFORM,
+            "handle": other.get("username") or other.get("name", ""),
             "messages": msgs,
             "lastInAt": last_in["at"] if last_in else None,
             "lastInId": last_in["id"] if last_in else None,
             "waitingForUs": bool(msgs) and not msgs[-1]["from_me"],
             "windowOpen": bool(last_in) and now - dt.datetime.fromisoformat(last_in["at"]) < dt.timedelta(hours=WINDOW_HOURS),
         })
-    json.dump({"account": account.get("username"), "fetchedAt": now.isoformat(), "conversations": out},
+    json.dump({"platform": PLATFORM, "account": account.get("username") or account.get("name"), "fetchedAt": now.isoformat(), "conversations": out},
               sys.stdout, ensure_ascii=False, indent=1)
     print()
 
@@ -100,12 +108,17 @@ def send(to, text):
     text = text.strip()
     if not text:
         sys.exit("Leere Nachricht, nichts gesendet.")
-    res = call("POST", "/me/messages", body={"recipient": {"id": to}, "message": {"text": text}})
+    body = {"recipient": {"id": to}, "message": {"text": text}}
+    if PLATFORM == "messenger":
+        body["messaging_type"] = "RESPONSE"  # Antwort im 24-h-Fenster
+    res = call("POST", "/me/messages", body=body)
     print(json.dumps({"sent": True, "message_id": res.get("message_id")}))
 
 
 def main():
+    global PLATFORM
     ap = argparse.ArgumentParser()
+    ap.add_argument("--platform", choices=sorted(PLATFORMS), default="instagram")
     sub = ap.add_subparsers(dest="cmd", required=True)
     sub.add_parser("check")
     f = sub.add_parser("fetch")
@@ -114,6 +127,7 @@ def main():
     s.add_argument("--to", required=True)
     s.add_argument("--text-file", required=True)
     a = ap.parse_args()
+    PLATFORM = a.platform
     if a.cmd == "check":
         print(json.dumps(me(), ensure_ascii=False))
     elif a.cmd == "fetch":
